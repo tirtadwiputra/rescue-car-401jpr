@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checklist Kendaraan</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    /* --- (CSS persis dari file original, tidak diubah) --- */
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #ffdec9 0%, #ffdec9 100%);
+      min-height: 100%;
+    }
+    * { box-sizing: border-box; }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .header { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; margin-bottom: 20px; }
+    .header h1 { margin: 0 0 10px 0; color: #2d3748; font-size: 28px; }
+    .header p { margin: 0; color: #718096; font-size: 16px; }
+    .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-button { flex: 1; min-width: 150px; padding: 15px 20px; background: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; color: #4a5568; transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .tab-button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+    .tab-button.active { background: #ff4727; color: white; }
+    .form-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; display: none; }
+    .form-card.active { display: block; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 8px; color: #2d3748; font-weight: 600; font-size: 14px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #ff4727; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .checklist-section { margin-bottom: 25px; padding: 20px; background: #f7fafc; border-radius: 8px; }
+    .checklist-section h3 { margin: 0 0 15px 0; color: #2d3748; font-size: 18px; border-bottom: 2px solid #ff4727; padding-bottom: 10px; }
+    .checklist-item { display: grid; grid-template-columns: 200px 1fr; gap: 15px; margin-bottom: 15px; align-items: start; }
+    .checklist-label { font-weight: 500; color: #4a5568; padding-top: 8px; }
+    .checklist-controls { display: flex; flex-direction: column; gap: 10px; }
+    .radio-group { display: flex; gap: 20px; }
+    .radio-option { display: flex; align-items: center; gap: 8px; }
+    .radio-option input[type="radio"] { width: auto; margin: 0; cursor: pointer; }
+    .radio-option label { margin: 0; font-weight: normal; cursor: pointer; }
+    .keterangan-field { display: none; }
+    .keterangan-field.show { display: block; }
+    .submit-button { width: 100%; padding: 15px; background: #48bb78; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.3s; }
+    .submit-button:hover { background: #38a169; }
+    .submit-button:disabled { background: #cbd5e0; cursor: not-allowed; }
+    .history-list { display: flex; flex-direction: column; gap: 15px; }
+    .history-item { background: #f7fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #ff4727; }
+    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+    .history-type { display: inline-block; padding: 4px 12px; background: #ff4727; color: white; border-radius: 4px; font-size: 12px; font-weight: 600; }
+    .history-actions { display: flex; gap: 10px; }
+    .print-button, .delete-button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s; }
+    .print-button { background: #2e27ff; color: white; }
+    .print-button:hover { background: #2e27ff; }
+    .delete-button { background: #fc8181; color: white; }
+    .delete-button:hover { background: #f56565; }
+    .history-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 14px; color: #4a5568; }
+    .info-item { display: flex; flex-direction: column; }
+    .info-label { font-weight: 600; color: #2d3748; margin-bottom: 4px; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #718096; }
+    .empty-state svg { width: 80px; height: 80px; margin-bottom: 20px; opacity: 0.5; }
+    .search-filters { background: #f7fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end; }
+    .filter-group { display: flex; flex-direction: column; gap: 8px; }
+    .filter-group label { font-weight: 600; color: #2d3748; font-size: 14px; }
+    .filter-group select, .filter-group input { padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: white; }
+    .reset-filter-button { padding: 10px 20px; background: #718096; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: background 0.3s; height: 42px; }
+    .reset-filter-button:hover { background: #4a5568; }
+    .detail-row { display: grid; grid-template-columns: 200px 100px 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { font-weight: 600; color: #2d3748; }
+    .detail-status { font-weight: 500; }
+    .detail-status.baik { color: #48bb78; }
+    .detail-status.tidak-baik { color: #f56565; }
+    .detail-keterangan { color: #4a5568; }
+    .checklist-details { margin-top: 15px; padding: 15px; background: white; border-radius: 6px; border: 1px solid #e2e8f0; }
+    .checklist-details h4 { margin: 0 0 15px 0; color: #2d3748; font-size: 16px; border-bottom: 2px solid #ff4727; padding-bottom: 8px; }
+    .toast { position: fixed; bottom: 30px; right: 30px; background: #48bb78; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; z-index: 1000; animation: slideIn 0.3s ease; }
+    .toast.show { display: block; }
+    .toast.error { background: #f56565; }
+    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @media print {
+      body { background: white; }
+      .container { max-width: 100%; }
+      .tab-buttons, .submit-button, .history-actions { display: none !important; }
+      .form-card { box-shadow: none; page-break-inside: avoid; }
+    }
+    @media (max-width: 768px) {
+      .checklist-item { grid-template-columns: 1fr; }
+      .tab-buttons { flex-direction: column; }
+      .history-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+</head>
+<body>
+ <div class="container">
+  <div class="header">
+   <p id="office-name" style="margin: 0 0 10px 0; font-size: 18px; color: #000000; font-weight: 600;">Kantor Pencarian dan Pertolongan Kelas A Jayapura</p>
+   <h1 id="form-title" style="margin: 0;">Checklist Pengecekan Kendaraan Rescue Car</h1>
+  </div>
+
+  <div class="tab-buttons">
+    <button class="tab-button active" onclick="switchTab('harian')">Harian</button>
+    <button class="tab-button" onclick="switchTab('mingguan')">Mingguan</button>
+    <button class="tab-button" onclick="switchTab('bulanan')">Bulanan</button>
+    <button class="tab-button" onclick="switchTab('riwayat')">Riwayat Pengecekan</button>
+  </div>
+
+  <!-- Form Harian -->
+  <div id="form-harian" class="form-card active">
+    <h2 style="margin-top: 0; color: #000000;">Checklist Harian</h2>
+    <form id="formHarian" onsubmit="submitForm(event, 'harian')">
+     <div class="form-group"><label for="harian-kendaraan">Pilih Kendaraan *</label>
+       <select id="harian-kendaraan" required>
+         <option value="">-- Pilih Kendaraan --</option>
+         <option value="PA 8098 JZ">PA 8098 JZ</option>
+         <option value="PA 8568 JZ">PA 8568 JZ</option>
+         <option value="PA 1446 JZ">PA 1446 JZ</option>
+         <option value="PA 8116 JZ">PA 8116 JZ</option>
+       </select>
+     </div>
+     <div class="form-group"><label for="harian-hari">Hari *</label>
+       <input type="text" id="harian-hari" required placeholder="Contoh: Senin">
+     </div>
+     <div class="form-group"><label for="harian-tanggal">Tanggal *</label>
+       <input type="date" id="harian-tanggal" required>
+     </div>
+     <div class="form-group"><label for="harian-kagahar">Kagahar *</label>
+       <input type="text" id="harian-kagahar" required placeholder="Nama Kagahar">
+     </div>
+     <div class="form-group"><label for="harian-regu">Regu *</label>
+       <input type="text" id="harian-regu" required placeholder="Regu">
+     </div>
+     <div class="checklist-section">
+      <h3>Item Pengecekan</h3>
+      <div class="checklist-item">
+       <div class="checklist-label">Tekanan Ban</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="tekanan-ban-baik" name="tekanan-ban" value="Baik" onchange="toggleKeterangan('tekanan-ban')"> <label for="tekanan-ban-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="tekanan-ban-tidak" name="tekanan-ban" value="Tidak Baik" onchange="toggleKeterangan('tekanan-ban')"> <label for="tekanan-ban-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-tekanan-ban" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="checklist-item">
+       <div class="checklist-label">Level Oli</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="level-oli-baik" name="level-oli" value="Baik" onchange="toggleKeterangan('level-oli')"> <label for="level-oli-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="level-oli-tidak" name="level-oli" value="Tidak Baik" onchange="toggleKeterangan('level-oli')"> <label for="level-oli-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-level-oli" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="checklist-item">
+       <div class="checklist-label">Air Radiator</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="air-radiator-baik" name="air-radiator" value="Baik" onchange="toggleKeterangan('air-radiator')"> <label for="air-radiator-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="air-radiator-tidak" name="air-radiator" value="Tidak Baik" onchange="toggleKeterangan('air-radiator')"> <label for="air-radiator-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-air-radiator" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="checklist-item">
+       <div class="checklist-label">Rem & Kopling</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="rem-kopling-baik" name="rem-kopling" value="Baik" onchange="toggleKeterangan('rem-kopling')"> <label for="rem-kopling-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="rem-kopling-tidak" name="rem-kopling" value="Tidak Baik" onchange="toggleKeterangan('rem-kopling')"> <label for="rem-kopling-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-rem-kopling" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="checklist-item">
+       <div class="checklist-label">Indikator Dashboard</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="indikator-dashboard-baik" name="indikator-dashboard" value="Baik" onchange="toggleKeterangan('indikator-dashboard')"> <label for="indikator-dashboard-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="indikator-dashboard-tidak" name="indikator-dashboard" value="Tidak Baik" onchange="toggleKeterangan('indikator-dashboard')"> <label for="indikator-dashboard-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-indikator-dashboard" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="form-group"><label for="harian-posisi-km">Posisi KM *</label> <input type="text" id="harian-posisi-km" required placeholder="Contoh: 15000"></div>
+      <div class="form-group"><label for="harian-bbm">BBM *</label> <input type="text" id="harian-bbm" required placeholder="Contoh: 100%"></div>
+     </div>
+     <button type="submit" class="submit-button">Simpan Checklist Harian</button>
+    </form>
+  </div>
+
+  <!-- Form Mingguan -->
+  <div id="form-mingguan" class="form-card">
+    <h2 style="margin-top: 0; color: #000000;">Checklist Mingguan</h2>
+    <form id="formMingguan" onsubmit="submitForm(event, 'mingguan')">
+     <div class="form-group"><label for="mingguan-kendaraan">Pilih Kendaraan *</label>
+       <select id="mingguan-kendaraan" required>
+         <option value="">-- Pilih Kendaraan --</option>
+         <option value="PA 8098 JZ">PA 8098 JZ</option>
+         <option value="PA 8568 JZ">PA 8568 JZ</option>
+         <option value="PA 1446 JZ">PA 1446 JZ</option>
+         <option value="PA 8116 JZ">PA 8116 JZ</option>
+       </select>
+     </div>
+     <div class="form-group"><label for="mingguan-hari">Hari *</label> <input type="text" id="mingguan-hari" required placeholder="Contoh: Senin"></div>
+     <div class="form-group"><label for="mingguan-tanggal">Tanggal *</label> <input type="date" id="mingguan-tanggal" required></div>
+     <div class="form-group"><label for="mingguan-nama">Nama Personel *</label> <input type="text" id="mingguan-nama" required placeholder="Nama Personel"></div>
+     <div class="form-group"><label for="mingguan-jabatan">Jabatan *</label> <input type="text" id="mingguan-jabatan" required placeholder="Jabatan"></div>
+
+     <div class="checklist-section">
+      <h3>Item Pengecekan</h3>
+      <div class="checklist-item">
+       <div class="checklist-label">Lampu-lampu</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="lampu-baik" name="lampu-lampu" value="Baik" onchange="toggleKeterangan('lampu-lampu')"> <label for="lampu-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="lampu-tidak" name="lampu-lampu" value="Tidak Baik" onchange="toggleKeterangan('lampu-lampu')"> <label for="lampu-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-lampu-lampu" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="checklist-item">
+       <div class="checklist-label">Tekanan Ban & Ban Serep</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="ban-serep-baik" name="ban-serep" value="Baik" onchange="toggleKeterangan('ban-serep')"> <label for="ban-serep-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="ban-serep-tidak" name="ban-serep" value="Tidak Baik" onchange="toggleKeterangan('ban-serep')"> <label for="ban-serep-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-ban-serep" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="checklist-item">
+       <div class="checklist-label">Air Accu</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="air-accu-baik" name="air-accu" value="Baik" onchange="toggleKeterangan('air-accu')"> <label for="air-accu-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="air-accu-tidak" name="air-accu" value="Tidak Baik" onchange="toggleKeterangan('air-accu')"> <label for="air-accu-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-air-accu" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="checklist-item">
+       <div class="checklist-label">Minyak Rem</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="minyak-rem-baik" name="minyak-rem" value="Baik" onchange="toggleKeterangan('minyak-rem')"> <label for="minyak-rem-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="minyak-rem-tidak" name="minyak-rem" value="Tidak Baik" onchange="toggleKeterangan('minyak-rem')"> <label for="minyak-rem-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-minyak-rem" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="form-group"><label for="mingguan-posisi-km">Posisi KM *</label> <input type="text" id="mingguan-posisi-km" required placeholder="Contoh: 15000"></div>
+      <div class="form-group"><label for="mingguan-bbm">BBM *</label> <input type="text" id="mingguan-bbm" required placeholder="Contoh: 100%"></div>
+     </div>
+     <button type="submit" class="submit-button">Simpan Checklist Mingguan</button>
+    </form>
+  </div>
+
+  <!-- Form Bulanan -->
+  <div id="form-bulanan" class="form-card">
+    <h2 style="margin-top: 0; color: #000000;">Checklist Bulanan</h2>
+    <form id="formBulanan" onsubmit="submitForm(event, 'bulanan')">
+     <div class="form-group"><label for="bulanan-kendaraan">Pilih Kendaraan *</label>
+       <select id="bulanan-kendaraan" required>
+         <option value="">-- Pilih Kendaraan --</option>
+         <option value="PA 8098 JZ">PA 8098 JZ</option>
+         <option value="PA 8568 JZ">PA 8568 JZ</option>
+         <option value="PA 1446 JZ">PA 1446 JZ</option>
+         <option value="PA 8116 JZ">PA 8116 JZ</option>
+       </select>
+     </div>
+     <div class="form-group"><label for="bulanan-hari">Hari *</label> <input type="text" id="bulanan-hari" required placeholder="Contoh: Senin"></div>
+     <div class="form-group"><label for="bulanan-tanggal">Tanggal *</label> <input type="date" id="bulanan-tanggal" required></div>
+     <div class="form-group"><label for="bulanan-nama">Nama Personel *</label> <input type="text" id="bulanan-nama" required placeholder="Nama Personel"></div>
+     <div class="form-group"><label for="bulanan-jabatan">Jabatan *</label> <input type="text" id="bulanan-jabatan" required placeholder="Jabatan"></div>
+
+     <div class="checklist-section">
+      <h3>Item Pengecekan</h3>
+      <div class="checklist-item">
+       <div class="checklist-label">Kampas Rem</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="kampas-rem-baik" name="kampas-rem" value="Baik" onchange="toggleKeterangan('kampas-rem')"> <label for="kampas-rem-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="kampas-rem-tidak" name="kampas-rem" value="Tidak Baik" onchange="toggleKeterangan('kampas-rem')"> <label for="kampas-rem-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-kampas-rem" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="checklist-item">
+       <div class="checklist-label">Filter Udara</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="filter-udara-baik" name="filter-udara" value="Baik" onchange="toggleKeterangan('filter-udara')"> <label for="filter-udara-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="filter-udara-tidak" name="filter-udara" value="Tidak Baik" onchange="toggleKeterangan('filter-udara')"> <label for="filter-udara-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-filter-udara" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="checklist-item">
+       <div class="checklist-label">Filter Solar</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="filter-solar-baik" name="filter-solar" value="Baik" onchange="toggleKeterangan('filter-solar')"> <label for="filter-solar-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="filter-solar-tidak" name="filter-solar" value="Tidak Baik" onchange="toggleKeterangan('filter-solar')"> <label for="filter-solar-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-filter-solar" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="checklist-item">
+       <div class="checklist-label">Fan Belt</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="fan-belt-baik" name="fan-belt" value="Baik" onchange="toggleKeterangan('fan-belt')"> <label for="fan-belt-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="fan-belt-tidak" name="fan-belt" value="Tidak Baik" onchange="toggleKeterangan('fan-belt')"> <label for="fan-belt-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-fan-belt" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="checklist-item">
+       <div class="checklist-label">Kondisi Oli</div>
+       <div class="checklist-controls">
+         <div class="radio-group">
+           <div class="radio-option"><input type="radio" id="kondisi-oli-baik" name="kondisi-oli" value="Baik" onchange="toggleKeterangan('kondisi-oli')"> <label for="kondisi-oli-baik">Baik</label></div>
+           <div class="radio-option"><input type="radio" id="kondisi-oli-tidak" name="kondisi-oli" value="Tidak Baik" onchange="toggleKeterangan('kondisi-oli')"> <label for="kondisi-oli-tidak">Tidak Baik</label></div>
+         </div>
+         <textarea id="keterangan-kondisi-oli" class="keterangan-field" placeholder="Keterangan (jika tidak baik)"></textarea>
+       </div>
+      </div>
+
+      <div class="form-group"><label for="bulanan-posisi-km">Posisi KM *</label> <input type="text" id="bulanan-posisi-km" required placeholder="Contoh: 15000"></div>
+      <div class="form-group"><label for="bulanan-bbm">BBM *</label> <input type="text" id="bulanan-bbm" required placeholder="Contoh: 100%"></div>
+     </div>
+     <button type="submit" class="submit-button">Simpan Checklist Bulanan</button>
+    </form>
+  </div>
+
+  <!-- Riwayat -->
+  <div id="form-riwayat" class="form-card">
+    <h2 style="margin-top: 0; color: #000000;">Riwayat Pengecekan</h2>
+    <div class="search-filters">
+      <div class="filter-group"><label for="filter-kendaraan">Cari Kendaraan</label>
+        <select id="filter-kendaraan" onchange="filterRecords()">
+          <option value="">Semua Kendaraan</option>
+          <option value="PA 8098 JZ">PA 8098 JZ</option>
+          <option value="PA 8568 JZ">PA 8568 JZ</option>
+          <option value="PA 1446 JZ">PA 1446 JZ</option>
+          <option value="PA 8116 JZ">PA 8116 JZ</option>
+        </select>
+      </div>
+
+      <div class="filter-group"><label for="filter-tipe">Tipe Pengecekan</label>
+        <select id="filter-tipe" onchange="filterRecords()">
+          <option value="">Semua Tipe</option>
+          <option value="harian">Harian</option>
+          <option value="mingguan">Mingguan</option>
+          <option value="bulanan">Bulanan</option>
+        </select>
+      </div>
+
+      <div class="filter-group"><label for="filter-tanggal">Cari Tanggal</label> <input type="date" id="filter-tanggal" onchange="filterRecords()"></div>
+      <button class="reset-filter-button" onclick="resetFilters()">Reset Filter</button>
+    </div>
+
+    <div id="history-list" class="history-list"></div>
+  </div>
+
+ </div>
+
+ <div id="toast" class="toast"></div>
+
+ <script>
+    // -----------------------
+    // CONFIG: ganti dengan Web App URL Anda (sudah Anda berikan)
+    // -----------------------
+    const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxg0xUP3b2VCjezKlTq09PceB6nc4wyT0Ekik3Q3VJUy0jFW1b4bhvBJQLUKbTZkC_rDw/exec";
+
+    // default config dari file original
+    const defaultConfig = {
+      office_name: "Kantor Pencarian dan Pertolongan Kelas A Jayapura",
+      form_title: "Checklist Pengecekan Kendaraan"
+    };
+
+    // local in-memory records (dipakai untuk menampilkan riwayat langsung setelah simpan)
+    let allRecords = [];
+    let currentTab = 'harian';
+
+    // --- element/data sdk handlers dari file original (tetap dibiarkan, tidak wajib) ---
+    const dataHandler = {
+      onDataChanged(data) {
+        allRecords = data;
+        renderHistory();
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      // coba inisialisasi SDK kalau tersedia (tetap aman kalau tidak ada)
+      if (window.dataSdk) {
+        try {
+          const initResult = await window.dataSdk.init(dataHandler);
+          if (!initResult.isOk) {
+            console.error("Failed to initialize data SDK");
+          }
+        } catch (e) {
+          console.warn("dataSdk init error:", e);
+        }
+      }
+
+      if (window.elementSdk) {
+        try {
+          await window.elementSdk.init({
+            defaultConfig,
+            onConfigChange: async (config) => {
+              const officeName = config.office_name || defaultConfig.office_name;
+              const formTitle = config.form_title || defaultConfig.form_title;
+              document.getElementById('office-name').textContent = officeName;
+              document.getElementById('form-title').textContent = formTitle;
+            },
+            mapToCapabilities: (config) => ({
+              recolorables: [],
+              borderables: [],
+              fontEditable: undefined,
+              fontSizeable: undefined
+            }),
+            mapToEditPanelValues: (config) => new Map([
+              ["office_name", config.office_name || defaultConfig.office_name],
+              ["form_title", config.form_title || defaultConfig.form_title]
+            ])
+          });
+
+          if (window.elementSdk.config) {
+            const config = window.elementSdk.config;
+            document.getElementById('office-name').textContent = config.office_name || defaultConfig.office_name;
+            document.getElementById('form-title').textContent = config.form_title || defaultConfig.form_title;
+          }
+        } catch (e) {
+          console.warn("elementSdk init error:", e);
+        }
+      }
+    });
+
+    // -----------------------
+    // UI helpers
+    // -----------------------
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      // find clicked button by text or onclick - simpler: use event
+      // but event isn't passed — use a different approach: set active by matching onclick value
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tab)) btn.classList.add('active');
+      });
+      document.querySelectorAll('.form-card').forEach(card => card.classList.remove('active'));
+      const el = document.getElementById(`form-${tab}`);
+      if (el) el.classList.add('active');
+    }
+
+    function toggleKeterangan(fieldName) {
+      const radios = document.getElementsByName(fieldName);
+      const keteranganField = document.getElementById(`keterangan-${fieldName}`);
+      let selectedValue = '';
+      radios.forEach ? radios.forEach(radio => { if (radio.checked) selectedValue = radio.value; }) : Array.from(radios).forEach(radio => { if (radio.checked) selectedValue = radio.value; });
+      if (selectedValue === 'Tidak Baik') {
+        if (keteranganField) keteranganField.classList.add('show');
+      } else {
+        if (keteranganField) { keteranganField.classList.remove('show'); keteranganField.value = ''; }
+      }
+    }
+
+    // get radio value util
+    function getRadioValue(name) {
+      const radios = document.getElementsByName(name);
+      for (let radio of radios) {
+        if (radio.checked) return radio.value;
+      }
+      return '';
+    }
+
+    // show toast
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast show ${type}`;
+      setTimeout(() => { toast.className = 'toast'; }, 3000);
+    }
+
+    // saveToGoogleSheet: kirim POST ke Apps Script Web App
+    async function saveToGoogleSheet(formData) {
+      try {
+        const resp = await fetch(GOOGLE_WEB_APP_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        const json = await resp.json();
+        return json;
+      } catch (err) {
+        return { success: false, message: err.message };
+      }
+    }
+
+    // --- Modified submitForm: replace dataSdk usage with saveToGoogleSheet ---
+    async function submitForm(event, type) {
+      event.preventDefault();
+
+      if (allRecords.length >= 999) {
+        showToast('Batas maksimum 999 data tercapai. Silakan hapus data lama terlebih dahulu.', 'error');
+        return;
+      }
+
+      const button = event.target.querySelector('.submit-button');
+      button.disabled = true;
+      const originalText = button.textContent;
+      button.textContent = 'Menyimpan...';
+
+      const formData = {
+        id: Date.now().toString(),
+        tipe_checklist: type,
+        kendaraan: document.getElementById(`${type}-kendaraan`).value,
+        tanggal: document.getElementById(`${type}-tanggal`).value,
+        hari: document.getElementById(`${type}-hari`).value,
+        created_at: new Date().toISOString()
+      };
+
+      if (type === 'harian') {
+        formData.kagahar = document.getElementById('harian-kagahar').value;
+        formData.regu = document.getElementById('harian-regu').value;
+        formData.tekanan_ban = getRadioValue('tekanan-ban');
+        formData.keterangan_tekanan_ban = document.getElementById('keterangan-tekanan-ban').value;
+        formData.level_oli = getRadioValue('level-oli');
+        formData.keterangan_level_oli = document.getElementById('keterangan-level-oli').value;
+        formData.air_radiator = getRadioValue('air-radiator');
+        formData.keterangan_air_radiator = document.getElementById('keterangan-air-radiator').value;
+        formData.rem_kopling = getRadioValue('rem-kopling');
+        formData.keterangan_rem_kopling = document.getElementById('keterangan-rem-kopling').value;
+        formData.indikator_dashboard = getRadioValue('indikator-dashboard');
+        formData.keterangan_indikator_dashboard = document.getElementById('keterangan-indikator-dashboard').value;
+        formData.posisi_km = document.getElementById('harian-posisi-km').value;
+        formData.bbm = document.getElementById('harian-bbm').value;
+      } else if (type === 'mingguan') {
+        formData.nama_personel = document.getElementById('mingguan-nama').value;
+        formData.jabatan = document.getElementById('mingguan-jabatan').value;
+        formData.lampu_lampu = getRadioValue('lampu-lampu');
+        formData.keterangan_lampu_lampu = document.getElementById('keterangan-lampu-lampu').value;
+        formData.ban_serep = getRadioValue('ban-serep');
+        formData.keterangan_ban_serep = document.getElementById('keterangan-ban-serep').value;
+        formData.air_accu = getRadioValue('air-accu');
+        formData.keterangan_air_accu = document.getElementById('keterangan-air-accu').value;
+        formData.minyak_rem = getRadioValue('minyak-rem');
+        formData.keterangan_minyak_rem = document.getElementById('keterangan-minyak-rem').value;
+        formData.posisi_km = document.getElementById('mingguan-posisi-km').value;
+        formData.bbm = document.getElementById('mingguan-bbm').value;
+      } else if (type === 'bulanan') {
+        formData.nama_personel = document.getElementById('bulanan-nama').value;
+        formData.jabatan = document.getElementById('bulanan-jabatan').value;
+        formData.kampas_rem = getRadioValue('kampas-rem');
+        formData.keterangan_kampas_rem = document.getElementById('keterangan-kampas-rem').value;
+        formData.filter_udara = getRadioValue('filter-udara');
+        formData.keterangan_filter_udara = document.getElementById('keterangan-filter-udara').value;
+        formData.filter_solar = getRadioValue('filter-solar');
+        formData.keterangan_filter_solar = document.getElementById('keterangan-filter-solar').value;
+        formData.fan_belt = getRadioValue('fan-belt');
+        formData.keterangan_fan_belt = document.getElementById('keterangan-fan-belt').value;
+        formData.kondisi_oli = getRadioValue('kondisi-oli');
+        formData.keterangan_kondisi_oli = document.getElementById('keterangan-kondisi-oli').value;
+        formData.posisi_km = document.getElementById('bulanan-posisi-km').value;
+        formData.bbm = document.getElementById('bulanan-bbm').value;
+      }
+
+      // Kirim ke Google Apps Script Web App
+      const result = await saveToGoogleSheet(formData);
+
+      // aktifkan kembali tombol dan tampilkan pesan
+      button.disabled = false;
+      button.textContent = originalText;
+
+      if (result && result.success) {
+        // tambahkan ke allRecords lokal supaya riwayat segera muncul
+        const localRecord = Object.assign({}, formData, {
+          tipe_checklist: type,
+          __backendId: 'row-' + (result.row || Date.now()),
+          created_at: new Date().toISOString()
+        });
+        allRecords.push(localRecord);
+        renderHistory();
+        showToast('Data berhasil disimpan ke Google Sheet!');
+        event.target.reset();
+        document.querySelectorAll('.keterangan-field').forEach(field => { field.classList.remove('show'); });
+      } else {
+        const msg = result && result.message ? result.message : 'Gagal menyimpan data. Cek kembali konfigurasi Web App.';
+        showToast(msg, 'error');
+      }
+    }
+
+    // render history (sama seperti original)
+    function renderHistory(recordsToDisplay = allRecords) {
+      const historyList = document.getElementById('history-list');
+      if (recordsToDisplay.length === 0) {
+        historyList.innerHTML = `
+          <div class="empty-state">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <h3>Tidak Ada Data</h3>
+            <p>${allRecords.length === 0 ? 'Riwayat pengecekan akan muncul di sini setelah Anda menyimpan checklist.' : 'Tidak ada data yang sesuai dengan filter pencarian.'}</p>
+          </div>`;
+        return;
+      }
+
+      const sortedRecords = [...recordsToDisplay].sort((a, b) => { return new Date(b.created_at) - new Date(a.created_at); });
+
+      historyList.innerHTML = sortedRecords.map(record => {
+        const typeLabel = record.tipe_checklist === 'harian' ? 'Harian' : record.tipe_checklist === 'mingguan' ? 'Mingguan' : 'Bulanan';
+        let checklistDetailsHTML = '';
+        if (record.tipe_checklist === 'harian') {
+          checklistDetailsHTML = `
+            <div class="checklist-details">
+              <h4>Hasil Pengecekan</h4>
+              ${createDetailRow('Tekanan Ban', record.tekanan_ban, record.keterangan_tekanan_ban)}
+              ${createDetailRow('Level Oli', record.level_oli, record.keterangan_level_oli)}
+              ${createDetailRow('Air Radiator', record.air_radiator, record.keterangan_air_radiator)}
+              ${createDetailRow('Rem & Kopling', record.rem_kopling, record.keterangan_rem_kopling)}
+              ${createDetailRow('Indikator Dashboard', record.indikator_dashboard, record.keterangan_indikator_dashboard)}
+            </div>`;
+        } else if (record.tipe_checklist === 'mingguan') {
+          checklistDetailsHTML = `
+            <div class="checklist-details">
+              <h4>Hasil Pengecekan</h4>
+              ${createDetailRow('Lampu-lampu', record.lampu_lampu, record.keterangan_lampu_lampu)}
+              ${createDetailRow('Tekanan Ban & Ban Serep', record.ban_serep, record.keterangan_ban_serep)}
+              ${createDetailRow('Air Accu', record.air_accu, record.keterangan_air_accu)}
+              ${createDetailRow('Minyak Rem', record.minyak_rem, record.keterangan_minyak_rem)}
+            </div>`;
+        } else {
+          checklistDetailsHTML = `
+            <div class="checklist-details">
+              <h4>Hasil Pengecekan</h4>
+              ${createDetailRow('Kampas Rem', record.kampas_rem, record.keterangan_kampas_rem)}
+              ${createDetailRow('Filter Udara', record.filter_udara, record.keterangan_filter_udara)}
+              ${createDetailRow('Filter Solar', record.filter_solar, record.keterangan_filter_solar)}
+              ${createDetailRow('Fan Belt', record.fan_belt, record.keterangan_fan_belt)}
+              ${createDetailRow('Kondisi Oli', record.kondisi_oli, record.keterangan_kondisi_oli)}
+            </div>`;
+        }
+
+        return `
+          <div class="history-item">
+            <div class="history-header">
+              <div>
+                <span class="history-type">${typeLabel}</span>
+                <strong style="margin-left: 10px;">${record.kendaraan}</strong>
+              </div>
+              <div class="history-actions">
+                <button class="print-button" onclick="printRecord('${record.__backendId}')">🖨️ Print</button>
+                <button class="delete-button" onclick="deleteRecord('${record.__backendId}')">🗑️ Hapus</button>
+              </div>
+            </div>
+            <div class="history-info">
+              <div class="info-item"><div class="info-label">Tanggal</div><div>${formatDate(record.tanggal)}</div></div>
+              <div class="info-item"><div class="info-label">Hari</div><div>${record.hari}</div></div>
+              ${record.kagahar ? `<div class="info-item"><div class="info-label">Kagahar</div><div>${record.kagahar}</div></div>` : ''}
+              ${record.regu ? `<div class="info-item"><div class="info-label">Regu</div><div>${record.regu}</div></div>` : ''}
+              ${record.nama_personel ? `<div class="info-item"><div class="info-label">Personel</div><div>${record.nama_personel}</div></div>` : ''}
+              ${record.jabatan ? `<div class="info-item"><div class="info-label">Jabatan</div><div>${record.jabatan}</div></div>` : ''}
+              <div class="info-item"><div class="info-label">Posisi KM</div><div>${record.posisi_km}</div></div>
+              <div class="info-item"><div class="info-label">BBM</div><div>${record.bbm}</div></div>
+            </div>
+            ${checklistDetailsHTML}
+          </div>`;
+      }).join('');
+    }
+
+    function createDetailRow(label, status, keterangan) {
+      const statusClass = status === 'Baik' ? 'baik' : 'tidak-baik';
+      const keteranganText = keterangan ? keterangan : '-';
+      return `
+        <div class="detail-row">
+          <div class="detail-label">${label}</div>
+          <div class="detail-status ${statusClass}">${status || '-'}</div>
+          <div class="detail-keterangan">${keteranganText}</div>
+        </div>`;
+    }
+
+    function filterRecords() {
+      const filterKendaraan = document.getElementById('filter-kendaraan').value;
+      const filterTipe = document.getElementById('filter-tipe').value;
+      const filterTanggal = document.getElementById('filter-tanggal').value;
+
+      let filteredRecords = allRecords;
+
+      if (filterKendaraan) filteredRecords = filteredRecords.filter(record => record.kendaraan === filterKendaraan);
+      if (filterTipe) filteredRecords = filteredRecords.filter(record => record.tipe_checklist === filterTipe);
+      if (filterTanggal) filteredRecords = filteredRecords.filter(record => record.tanggal === filterTanggal);
+
+      renderHistory(filteredRecords);
+    }
+
+    function resetFilters() {
+      document.getElementById('filter-kendaraan').value = '';
+      document.getElementById('filter-tipe').value = '';
+      document.getElementById('filter-tanggal').value = '';
+      renderHistory(allRecords);
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      if (isNaN(date)) return dateString;
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return date.toLocaleDateString('id-ID', options);
+    }
+
+    // deleteRecord: karena kita menyimpan ke Google Sheets (Apps Script) tanpa endpoint delete,
+    // penghapusan otomatis di server tidak tersedia — beri tahu pengguna untuk hapus manual.
+    function deleteRecord(backendId) {
+      const recordIndex = allRecords.findIndex(r => r.__backendId === backendId);
+      if (recordIndex === -1) return;
+      // Hapus lokal agar UI terupdate
+      allRecords.splice(recordIndex, 1);
+      renderHistory();
+      // Informasikan ke user
+      showToast('Item dihapus dari tampilan lokal. Untuk menghapus dari Google Sheet, hapus manual pada spreadsheet.', 'error');
+    }
+
+    function printRecord(backendId) {
+      const record = allRecords.find(r => r.__backendId === backendId);
+      if (!record) return;
+
+      const printWindow = window.open('', '_blank');
+      const typeLabel = record.tipe_checklist === 'harian' ? 'Harian' : record.tipe_checklist === 'mingguan' ? 'Mingguan' : 'Bulanan';
+      let checklistItems = '';
+
+      if (record.tipe_checklist === 'harian') {
+        checklistItems = `
+          <tr><td>Tekanan Ban</td><td>${record.tekanan_ban}</td><td>${record.keterangan_tekanan_ban || '-'}</td></tr>
+          <tr><td>Level Oli</td><td>${record.level_oli}</td><td>${record.keterangan_level_oli || '-'}</td></tr>
+          <tr><td>Air Radiator</td><td>${record.air_radiator}</td><td>${record.keterangan_air_radiator || '-'}</td></tr>
+          <tr><td>Rem & Kopling</td><td>${record.rem_kopling}</td><td>${record.keterangan_rem_kopling || '-'}</td></tr>
+          <tr><td>Indikator Dashboard</td><td>${record.indikator_dashboard}</td><td>${record.keterangan_indikator_dashboard || '-'}</td></tr>`;
+      } else if (record.tipe_checklist === 'mingguan') {
+        checklistItems = `
+          <tr><td>Lampu-lampu</td><td>${record.lampu_lampu}</td><td>${record.keterangan_lampu_lampu || '-'}</td></tr>
+          <tr><td>Tekanan Ban & Ban Serep</td><td>${record.ban_serep}</td><td>${record.keterangan_ban_serep || '-'}</td></tr>
+          <tr><td>Air Accu</td><td>${record.air_accu}</td><td>${record.keterangan_air_accu || '-'}</td></tr>
+          <tr><td>Minyak Rem</td><td>${record.minyak_rem}</td><td>${record.keterangan_minyak_rem || '-'}</td></tr>`;
+      } else {
+        checklistItems = `
+          <tr><td>Kampas Rem</td><td>${record.kampas_rem}</td><td>${record.keterangan_kampas_rem || '-'}</td></tr>
+          <tr><td>Filter Udara</td><td>${record.filter_udara}</td><td>${record.keterangan_filter_udara || '-'}</td></tr>
+          <tr><td>Filter Solar</td><td>${record.filter_solar}</td><td>${record.keterangan_filter_solar || '-'}</td></tr>
+          <tr><td>Fan Belt</td><td>${record.fan_belt}</td><td>${record.keterangan_fan_belt || '-'}</td></tr>
+          <tr><td>Kondisi Oli</td><td>${record.kondisi_oli}</td><td>${record.keterangan_kondisi_oli || '-'}</td></tr>`;
+      }
+
+      printWindow.document.write(`
+        <!DOCTYPE html><html><head><title>Checklist ${typeLabel} - ${record.kendaraan}</title>
+        <style>body{font-family:Arial;padding:40px}.header{text-align:center;margin-bottom:30px;border-bottom:2px solid #333;padding-bottom:20px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:10px;text-align:left}th{background:#f0f0f0;font-weight:bold}.signature{margin-top:50px;display:flex;justify-content:space-between}.signature-line{border-top:1px solid #333;margin-top:60px;padding-top:5px}</style>
+        </head><body>
+          <div class="header"><h1>Checklist Pengecekan Kendaraan ${typeLabel}</h1><h2>Kantor Pencarian dan Pertolongan Kelas A Jayapura</h2></div>
+          <div class="info-section">
+            <p><strong>Kendaraan:</strong> ${record.kendaraan}</p>
+            <p><strong>Hari/Tanggal:</strong> ${record.hari}, ${formatDate(record.tanggal)}</p>
+            ${record.kagahar ? `<p><strong>Kagahar:</strong> ${record.kagahar}</p>` : ''}
+            ${record.regu ? `<p><strong>Regu:</strong> ${record.regu}</p>` : ''}
+            ${record.nama_personel ? `<p><strong>Nama Personel:</strong> ${record.nama_personel}</p>` : ''}
+            ${record.jabatan ? `<p><strong>Jabatan:</strong> ${record.jabatan}</p>` : ''}
+            <p><strong>Posisi KM:</strong> ${record.posisi_km}</p>
+            <p><strong>BBM:</strong> ${record.bbm}</p>
+          </div>
+          <table><thead><tr><th>Item Pengecekan</th><th>Status</th><th>Keterangan</th></tr></thead><tbody>${checklistItems}</tbody></table>
+          <div class="signature"><div class="signature-box"><p>${record.tipe_checklist === 'harian' ? 'Kagahar' : 'Petugas Pemeriksa'}</p><div class="signature-line">${record.nama_personel || record.kagahar || '................................'}</div></div><div class="signature-box"><p>Mengetahui,</p><p>${record.tipe_checklist === 'harian' ? 'Kepala Seksi Operasi dan Siaga' : 'Kepala Seksi Sumber Daya'}</p><div class="signature-line">${record.tipe_checklist === 'harian' ? 'Marinus B. Ohoirat, S.H.' : 'Iwan Gunawan, S.E.'}</div></div></div>
+        </body></html>`);
+      printWindow.document.close();
+      setTimeout(()=>{ printWindow.print(); }, 250);
+    }
+
+    // small helper: read data from the Google Sheet via GET (optional). Not used automatically.
+    async function fetchSheetPreview() {
+      try {
+        // If you add a doGet that returns recent rows, you could fetch them here.
+        // Currently not implemented on server side beyond health-check.
+        const resp = await fetch(GOOGLE_WEB_APP_URL, { method: 'GET', mode: 'cors' });
+        const json = await resp.json();
+        return json;
+      } catch (e) {
+        return null;
+      }
+    }
+ </script>
+
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a0d5a249741fdfd',t:'MTc2MzUzMDYwOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
+</html>
